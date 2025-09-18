@@ -2593,6 +2593,96 @@
 					},
 					"response": []
 				}
+				,
+				{
+					"name": "Driver View Wallet",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{driverToken}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/drivers/{{driverId}}/wallet",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1","drivers","{{driverId}}","wallet"]
+						}
+					},
+					"response": []
+				}
+				,
+				{
+					"name": "Driver Wallet Transactions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{driverToken}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/drivers/{{driverId}}/wallet/transactions",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1","drivers","{{driverId}}","wallet","transactions"]
+						}
+					},
+					"response": []
+				}
+				,
+				{
+					"name": "Driver Withdraw (Driver Route)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{driverToken}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 50,\n  \"destination\": \"+2519XXXXXXX\",\n  \"method\": \"santimpay\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/drivers/{{driverId}}/wallet/withdraw",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1","drivers","{{driverId}}","wallet","withdraw"]
+						}
+					},
+					"response": []
+				}
+				,
+				{
+					"name": "Admin List Driver Wallets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/wallet/admin/wallets?page=1&pageSize=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1","wallet","admin","wallets"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "pageSize", "value": "20" }
+							]
+						}
+					},
+					"response": []
+				}
+				,
+				{
+					"name": "Admin Get Driver Wallet",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/wallet/admin/wallets/{{driverId}}?limit=100",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1","wallet","admin","wallets","{{driverId}}"],
+							"query": [ { "key": "limit", "value": "100" } ]
+						}
+					},
+					"response": []
+				}
 			]
 		}
 	],
