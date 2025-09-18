@@ -31,6 +31,7 @@ async function joinBookingRooms(socket, user) {
       query = { passengerId: String(user.id), status: { $in: ['requested', 'accepted', 'ongoing'] } };
     }
 
+    logger.info('[joinBookingRooms] Booking.find query:', query);
     const activeBookings = await Booking.find(query).select('_id').lean();
     activeBookings.forEach(booking => {
       const room = `booking:${String(booking._id)}`;
@@ -49,6 +50,7 @@ function getStoredNotes(bookingId) {
 
 // Helper: find all active drivers
 async function findActiveDrivers() {
+  logger.info('[findActiveDrivers] Driver.find query:', { available: true });
   return Driver.find({ available: true }).lean();
 }
 
@@ -68,6 +70,7 @@ async function resolveDriverFromToken(decoded) {
   if (phone) candidates.push({ phone });
   if (email) candidates.push({ email });
   for (const query of candidates) {
+    logger.info('[resolveDriverFromToken] Driver.findOne query:', query);
     const doc = await Driver.findOne(query).lean();
     if (doc) return doc;
   }
@@ -84,6 +87,7 @@ async function resolvePassengerIdFromToken(decoded) {
 
   if (id) {
     try {
+      logger.info('[resolvePassengerIdFromToken] Passenger.findById:', id);
       const p = await Passenger.findById(id).select({ _id: 1 }).lean();
       if (p) return String(p._id);
     } catch (_) {}
@@ -94,6 +98,7 @@ async function resolvePassengerIdFromToken(decoded) {
   if (phone) altQueries.push({ phone });
   if (email) altQueries.push({ email });
   for (const q of altQueries) {
+    logger.info('[resolvePassengerIdFromToken] Passenger.findOne query:', q);
     const p = await Passenger.findOne(q).select({ _id: 1 }).lean();
     if (p) return String(p._id);
   }
@@ -552,6 +557,7 @@ function attachSocketHandlers(io) {
         if (!bookingIdRaw) {
           return socket.emit('booking_error', { message: 'bookingId is required', source: 'booking:status_request' });
         }
+        logger.info('[booking:status_request] Booking.findById:', bookingIdRaw);
         let booking = null;
         try {
           booking = await Booking.findById(bookingIdRaw).lean();
@@ -699,6 +705,7 @@ function attachSocketHandlers(io) {
         if (!bookingIdRaw || !Number.isFinite(rating) || rating < 1 || rating > 5) {
           return socket.emit('booking_error', { message: 'bookingId and rating (1-5) are required', source: 'booking:rating' });
         }
+        logger.info('[booking:rating] Booking.findById:', bookingIdRaw);
         const booking = await Booking.findById(bookingIdRaw);
         if (!booking) return socket.emit('booking_error', { message: 'Booking not found', source: 'booking:rating' });
         if (booking.status !== 'completed') return socket.emit('booking_error', { message: 'Can only rate after trip completion', source: 'booking:rating' });
@@ -719,6 +726,7 @@ function attachSocketHandlers(io) {
         } else {
           return socket.emit('booking_error', { message: 'Unsupported user type for rating', source: 'booking:rating' });
         }
+        logger.info('[booking:rating] booking.save for booking:', String(booking._id), ', updates for userType:', userType);
         await booking.save();
         const room = `booking:${String(booking._id)}`;
         sendMessageToSocketId(room, { event: 'booking:rating', data: { bookingId: String(booking._id), userType, rating, feedback } });
