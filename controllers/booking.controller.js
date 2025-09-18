@@ -423,22 +423,30 @@ exports.lifecycle = async (req, res) => {
         
         // Update driver wallet: increment balance and totalEarnings by netEarnings
         try {
+          const mongoose = require('mongoose');
           const { Wallet, Transaction } = require('../models/common');
-          await Wallet.updateOne(
-            { userId: String(booking.driverId), role: 'driver' },
-            { $inc: { balance: netEarnings, totalEarnings: netEarnings } },
-            { upsert: true }
-          );
-          await Transaction.create({
-            userId: String(booking.driverId),
-            role: 'driver',
-            amount: netEarnings,
-            type: 'credit',
-            method: booking.paymentMethod || 'cash',
-            status: 'success',
-            metadata: { bookingId: String(booking._id), reason: 'Trip earnings' }
+          const session = await mongoose.startSession();
+          await session.withTransaction(async () => {
+            console.log('[wallet] credit on booking completed:', { driverId: String(booking.driverId), netEarnings, bookingId: String(booking._id) });
+            await Wallet.updateOne(
+              { userId: String(booking.driverId), role: 'driver' },
+              { $inc: { balance: netEarnings, totalEarnings: netEarnings } },
+              { upsert: true, session }
+            );
+            await Transaction.create([
+              {
+                userId: String(booking.driverId),
+                role: 'driver',
+                amount: netEarnings,
+                type: 'credit',
+                method: booking.paymentMethod || 'cash',
+                status: 'success',
+                metadata: { bookingId: String(booking._id), reason: 'Trip earnings (REST)' }
+              }
+            ], { session });
           });
-        } catch (_) {}
+          session.endSession();
+        } catch (e) { console.error('[wallet] credit on complete failed:', e); }
 
         // Create admin earnings record
         await AdminEarnings.create({

@@ -19,6 +19,7 @@ router.use('/mapping', require('./mapping.routes'));
 router.use('/passengers', require('./passenger.routes'));
 router.use('/analytics', require('./analytics.routes'));
 router.use('/wallet', require('./wallet.routes'));
+// Wallet admin read endpoints are available under /drivers and /wallet routes; ensure admin.routes exports only admin core APIs
 
 module.exports = router;
 

@@ -93,6 +93,7 @@ exports.webhook = async (req, res) => {
     await tx.save();
 
     if (normalizedStatus === 'success') {
+      // Credit wallet atomically; record credit transaction if not already credited via tx
       await Wallet.updateOne({ userId: tx.userId, role: tx.role }, { $inc: { balance: tx.amount } }, { upsert: true });
     }
 

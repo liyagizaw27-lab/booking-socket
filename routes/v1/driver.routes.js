@@ -14,8 +14,9 @@ router.post('/:id/availability', authenticate, authorize('driver'), ctrl.setAvai
 router.post('/:id/location', authenticate, authorize('driver'), ctrl.updateLocation);
 // Driver wallet endpoints
 router.get('/:id/wallet', authenticate, authorize('driver','admin','superadmin'), walletCtrl.getWallet);
-router.post('/:id/wallet/adjust', authenticate, authorize('admin','superadmin'), walletCtrl.adjustBalance);
 router.get('/:id/wallet/transactions', authenticate, authorize('driver','admin','superadmin'), walletCtrl.listTransactions);
+router.post('/:id/wallet/withdraw', authenticate, authorize('driver'), walletCtrl.withdraw);
+router.post('/:id/wallet/adjust', authenticate, authorize('admin','superadmin'), walletCtrl.adjustBalance);
 // Map external user service id to internal driver
 router.post('/:id/set-external-id', authenticate, authorize('admin','staff'), async (req, res) => {
   try {
