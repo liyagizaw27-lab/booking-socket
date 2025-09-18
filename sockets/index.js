@@ -2,6 +2,7 @@ let ioRef;
 const jwt = require('jsonwebtoken');
 const geolib = require('geolib');
 const mongoose = require('mongoose');
+const { getDriverById } = require('../integrations/userServiceClient');
 require('dotenv').config();
 
 // Models
@@ -119,6 +120,22 @@ function attachSocketHandlers(io) {
           const driverDoc = await resolveDriverFromToken(decoded);
           const driverId = driverDoc ? String(driverDoc._id) : (decoded.id ? String(decoded.id) : undefined);
           user = { type: 'driver', id: driverId, vehicleType: driverDoc?.vehicleType, name: driverDoc?.name || decoded.name, phone: driverDoc?.phone || (decoded.phone || decoded.phoneNumber || decoded.mobile) };
+          // Persist auth token on socket for later service calls
+          socket.authToken = rawToken;
+
+          // If vehicleType or vehicle details are missing, hydrate from User Service
+          if (driverId && (!user.vehicleType || !user.carPlate || !user.carModel || !user.carColor)) {
+            try {
+              const authHeader = rawToken ? { Authorization: rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}` } : undefined;
+              const driverProfile = await getDriverById(driverId, { headers: authHeader || {} });
+              if (driverProfile) {
+                user.vehicleType = user.vehicleType || driverProfile.vehicleType;
+                user.carPlate = driverProfile.carPlate;
+                user.carModel = driverProfile.carModel;
+                user.carColor = driverProfile.carColor;
+              }
+            } catch (_) {}
+          }
           socket.user = user;
           console.log('[connection] Authenticated driver:', user);
 
@@ -262,6 +279,12 @@ function attachSocketHandlers(io) {
               name: authUser.name,
               phone: authUser.phone,
               vehicleType: authUser.vehicleType,
+              vehicle: {
+                type: authUser.vehicleType,
+                plate: authUser.carPlate,
+                model: authUser.carModel,
+                color: authUser.carColor,
+              }
             }
           }
         };
